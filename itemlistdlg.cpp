@@ -60,8 +60,8 @@ BOOL CItemListDlg::OnInitDialog()
 	m_cmbFilter.SetItemData(2, CInventoryDlg::FILTER_NORMAL);
 	m_cmbFilter.AddString(_T("特殊道具"));
 	m_cmbFilter.SetItemData(3, CInventoryDlg::FILTER_SPECIAL);
-	m_cmbFilter.AddString(_T("装備品"));
-	m_cmbFilter.SetItemData(4, CInventoryDlg::FILTER_EQUIPMENT);
+	m_cmbFilter.AddString(_T("武器"));
+	m_cmbFilter.SetItemData(4, CInventoryDlg::FILTER_WEAPON);
 	m_cmbFilter.AddString(_T("剣"));
 	m_cmbFilter.SetItemData(5, CInventoryDlg::FILTER_SWORD);
 	m_cmbFilter.AddString(_T("やり"));

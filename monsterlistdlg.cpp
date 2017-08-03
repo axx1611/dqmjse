@@ -75,6 +75,11 @@ BOOL CMonsterListDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	m_cmbSource.AddString(_T("Ò°Á¼¥â¥ó¥¹¥¿©`¥¹¥«¥¦¥È"));
+	m_cmbSource.SetCurSel(0);
+	m_cmbGuardLevel[0].AddString(_T("¤Õ¤Ä¤¦"));
+	m_cmbType.AddString(_T("¤·¤ó¤¸¤å¤¦Ïµ"));
+
 	return TRUE;
 }
 

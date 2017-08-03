@@ -227,8 +227,8 @@ void CInventoryDlg::RefreshFilter()
 			if (is.type != DQMJ_ITEM_SPECIAL)
 				continue;
 			break;
-		case FILTER_EQUIPMENT:
-			if (!is.equipment)
+		case FILTER_WEAPON:
+			if (!is.weapon)
 				continue;
 			break;
 		case FILTER_SWORD:
