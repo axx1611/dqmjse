@@ -52,31 +52,19 @@ BOOL CItemListDlg::OnInitDialog()
 	DQMJ_SAVE_ITEM_INFO iteminfo;
 	VERIFY(::DQMJSaveQueryItemInfo(((CDqmjSEApp *)::AfxGetApp())->GetSaveHandle(), &iteminfo));
 
-	m_cmbFilter.AddString(_T("全部"));
-	m_cmbFilter.SetItemData(0, CInventoryDlg::FILTER_ALL);
-	m_cmbFilter.AddString(_T("使い物"));
-	m_cmbFilter.SetItemData(1, CInventoryDlg::FILTER_USABLE);
-	m_cmbFilter.AddString(_T("一般道具"));
-	m_cmbFilter.SetItemData(2, CInventoryDlg::FILTER_NORMAL);
-	m_cmbFilter.AddString(_T("特殊道具"));
-	m_cmbFilter.SetItemData(3, CInventoryDlg::FILTER_SPECIAL);
-	m_cmbFilter.AddString(_T("武器"));
-	m_cmbFilter.SetItemData(4, CInventoryDlg::FILTER_WEAPON);
-	m_cmbFilter.AddString(_T("剣"));
-	m_cmbFilter.SetItemData(5, CInventoryDlg::FILTER_SWORD);
-	m_cmbFilter.AddString(_T("やり"));
-	m_cmbFilter.SetItemData(6, CInventoryDlg::FILTER_SPEAR);
-	m_cmbFilter.AddString(_T("オノ"));
-	m_cmbFilter.SetItemData(7, CInventoryDlg::FILTER_AXE);
-	m_cmbFilter.AddString(_T("ハンマー"));
-	m_cmbFilter.SetItemData(8, CInventoryDlg::FILTER_HAMMER);
-	m_cmbFilter.AddString(_T("ムチ"));
-	m_cmbFilter.SetItemData(9, CInventoryDlg::FILTER_WHIP);
-	m_cmbFilter.AddString(_T("ツメ"));
-	m_cmbFilter.SetItemData(10, CInventoryDlg::FILTER_CLAW);
-	m_cmbFilter.AddString(_T("つえ"));
-	m_cmbFilter.SetItemData(11, CInventoryDlg::FILTER_STAFF);
-	m_cmbFilter.SetCurSel(0);
+	VERIFY(m_cmbFilter.AddString(_T("全部")) == CInventoryDlg::FILTER_ALL);
+	VERIFY(m_cmbFilter.AddString(_T("使い物")) == CInventoryDlg::FILTER_USABLE);
+	VERIFY(m_cmbFilter.AddString(_T("一般道具")) == CInventoryDlg::FILTER_NORMAL);
+	VERIFY(m_cmbFilter.AddString(_T("特殊道具")) == CInventoryDlg::FILTER_SPECIAL);
+	VERIFY(m_cmbFilter.AddString(_T("武器")) == CInventoryDlg::FILTER_WEAPON);
+	VERIFY(m_cmbFilter.AddString(_T("剣")) == CInventoryDlg::FILTER_SWORD);
+	VERIFY(m_cmbFilter.AddString(_T("やり")) == CInventoryDlg::FILTER_SPEAR);
+	VERIFY(m_cmbFilter.AddString(_T("オノ")) == CInventoryDlg::FILTER_AXE);
+	VERIFY(m_cmbFilter.AddString(_T("ハンマー")) == CInventoryDlg::FILTER_HAMMER);
+	VERIFY(m_cmbFilter.AddString(_T("ムチ")) == CInventoryDlg::FILTER_WHIP);
+	VERIFY(m_cmbFilter.AddString(_T("ツメ")) == CInventoryDlg::FILTER_CLAW);
+	VERIFY(m_cmbFilter.AddString(_T("つえ")) == CInventoryDlg::FILTER_STAFF);
+	m_cmbFilter.SetCurSel(CInventoryDlg::FILTER_ALL);
 
 	CRect rect;
 	GetDlgItem(IDC_STATIC_RECT)->GetWindowRect(&rect);
@@ -87,12 +75,8 @@ BOOL CItemListDlg::OnInitDialog()
 
 	for (int i = 0; i < DQMJ_BAGGAGE_MAX; i++)
 	{
-		if (iteminfo.baggage[i] == 0x00)
-			continue;
-
-		int index = m_lstBaggage.AddString(GetItemName(iteminfo.baggage[i]));
-		ASSERT(index >= 0);
-		m_lstBaggage.SetItemData(index, iteminfo.baggage[i]);
+		if (iteminfo.baggage[i] != 0x00)
+			VERIFY(m_lstBaggage.SetItemData(m_lstBaggage.AddString(GetItemName(iteminfo.baggage[i])), iteminfo.baggage[i]) != LB_ERR);
 	}
 
 	RefreshEnable();
@@ -295,7 +279,7 @@ void CItemListDlg::OnCbnSelchangeComboInventoryFilter()
 {
 	int sel = m_cmbFilter.GetCurSel();
 	if (sel >= 0)
-		m_dlgInventory.SetFilter((CInventoryDlg::FILTER)m_cmbFilter.GetItemData(sel));
+		m_dlgInventory.SetFilter((CInventoryDlg::FILTER)sel);
 }
 
 //////////////////////////////////////////////////////////////////////////
