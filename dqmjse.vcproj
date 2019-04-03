@@ -222,7 +222,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\monsterinfodlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\monsterlistdlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\selectmonsterdlg.cpp"
 				>
 			</File>
 			<File
@@ -280,11 +288,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\monsterinfodlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\monsterlistdlg.h"
 				>
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\selectmonsterdlg.h"
 				>
 			</File>
 			<File
