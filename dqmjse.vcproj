@@ -230,10 +230,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\selectmonsterdlg.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\selectusabledlg.cpp"
 				>
 			</File>
@@ -297,10 +293,6 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\selectmonsterdlg.h"
 				>
 			</File>
 			<File
