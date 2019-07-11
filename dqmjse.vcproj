@@ -234,6 +234,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\selectweapondlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -297,6 +301,10 @@
 			</File>
 			<File
 				RelativePath=".\selectusabledlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\selectweapondlg.h"
 				>
 			</File>
 			<File
