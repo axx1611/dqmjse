@@ -214,7 +214,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\inventorydlg.cpp"
+				RelativePath=".\inventorypaneldlg.cpp"
 				>
 			</File>
 			<File
@@ -226,7 +226,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\monsterlibrarydlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\monsterlistdlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\monsterpaneldlg.cpp"
 				>
 			</File>
 			<File
@@ -284,7 +292,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\inventorydlg.h"
+				RelativePath=".\inventorypaneldlg.h"
 				>
 			</File>
 			<File
@@ -296,7 +304,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\monsterlibrarydlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\monsterlistdlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\monsterpaneldlg.h"
 				>
 			</File>
 			<File
