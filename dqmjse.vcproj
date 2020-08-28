@@ -250,6 +250,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\skilllibrarydlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\skillpaneldlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -329,6 +337,14 @@
 			</File>
 			<File
 				RelativePath=".\selectweapondlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\skilllibrarydlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\skillpaneldlg.h"
 				>
 			</File>
 			<File
