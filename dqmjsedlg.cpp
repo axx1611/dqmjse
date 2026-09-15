@@ -860,7 +860,7 @@ void CDqmjSEDlg::EditMember(BOOL party_or_standby, int idx)
 CString CDqmjSEDlg::GetStoryString(int story)
 {
 	WCHAR str[] = L"☆☆☆☆☆☆☆☆☆☆";
-	for (int i = 0; i < story; i++)
+	for (int i = 0; i < min(story, 10); i++)
 		str[i] = L'★';
 
 	return CString(str);

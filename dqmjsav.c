@@ -1182,11 +1182,11 @@ BOOL DQMJSaveModifyPlayInfo(HDQMJSAVE handle, CONST DQMJ_SAVE_PLAY_INFO *in)
 		return FALSE;
 
 	body = GET_BODY(handle);
-	body->gold = min(in->gold, DQMJ_GOLD_MAX);
-	body->deposit = min(in->deposit, DQMJ_GOLD_MAX);
-	body->scout_times = min(in->scout_times, DQMJ_RECORD_MAX);
-	body->victory_times = min(in->victory_times, DQMJ_RECORD_MAX);
-	body->combine_times = min(in->combine_times, DQMJ_RECORD_MAX);
+	body->gold = MINMAX(in->gold, 0, DQMJ_GOLD_MAX);
+	body->deposit = MINMAX(in->deposit, 0, DQMJ_GOLD_MAX);
+	body->scout_times = MINMAX(in->scout_times, 0, DQMJ_RECORD_MAX);
+	body->victory_times = MINMAX(in->victory_times, 0, DQMJ_RECORD_MAX);
+	body->combine_times = MINMAX(in->combine_times, 0, DQMJ_RECORD_MAX);
 	body->player_skill = 0;
 	COPY_NAME(body->player_name, in->player_name);
 	body->play_time = hms_to_timestamp(in->play_time_hour, in->play_time_min, in->play_time_sec, body->play_time);
@@ -1224,7 +1224,7 @@ BOOL DQMJSaveModifyItemInfo(HDQMJSAVE handle, CONST DQMJ_SAVE_ITEM_INFO *in)
 	}
 
 	for (i = 0; i < DQMJ_ITEMLIST_LEN; i++)
-		body->inventory[i] = min(in->inventory[i], DQMJ_ITEM_MAX);
+		body->inventory[i] = MINMAX(in->inventory[i], 0, DQMJ_ITEM_MAX);
 	for (i = 0; i < DQMJ_SKILLBOOK_NUM; i++)
 		body->bookstore_onsale[i] = in->bookstore_onsale[i] ? 1 : 0;
 
@@ -1427,7 +1427,7 @@ BOOL DQMJSaveNewMonster(HDQMJSAVE handle, CONST DQMJ_SAVE_MONSTER_INFO *in, BOOL
 
 	body = GET_BODY(handle);
 
-	if (body->monster_num >= DQMJ_MONSTER_MAX - 1)
+	if (body->monster_num >= DQMJ_MONSTER_MAX)
 		return FALSE;
 
 	clear_monster_info(&monster);
@@ -1542,7 +1542,7 @@ BOOL DQMJSaveCopyMonster(HDQMJSAVE handle, int monster_idx)
 
 	body = GET_BODY(handle);
 
-	if ((body->monster_num >= DQMJ_MONSTER_MAX - 1) || !BETWEEN(monster_idx, 0, body->monster_num))
+	if ((body->monster_num >= DQMJ_MONSTER_MAX) || !BETWEEN(monster_idx, 0, body->monster_num))
 		return FALSE;
 
 	monster = body->monster_list[monster_idx];
@@ -1975,7 +1975,7 @@ static VOID modify_monster_info_force(struct monster_fmt *monster, CONST DQMJ_SA
 	CONST struct race_info *ri;
 	CONST struct ability_info *ai;
 
-	ri = lookup_race_info(monster->race);
+	ri = lookup_race_info(in->race);
 
 	monster->cheat = in->cheat ? 1 : 0;
 	monster->race = in->race;
@@ -2116,7 +2116,7 @@ BOOL normalize_monster_by_handle(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MO
 
 	if (monster_idx >= 0)
 	{
-		if (monster_idx <= min(body->monster_num, DQMJ_MONSTER_MAX))
+		if (monster_idx >= min(body->monster_num, DQMJ_MONSTER_MAX))
 			return FALSE;
 
 		in_party_or_standby = check_monster_in_party_or_standby(monster_idx, body);
@@ -2466,7 +2466,7 @@ static UINT write_compressed_data(HANDLE file, struct save_info *sav)
 	}
 	while (offset < raw_size);
 
-	if (repeat_len > 0)
+	if (repeat_len > 2)
 	{
 		wrt_size = compress_repeat_data(file, repeat_len, byte);
 		if (wrt_size == 0)
@@ -2474,7 +2474,6 @@ static UINT write_compressed_data(HANDLE file, struct save_info *sav)
 	}
 	else
 	{
-		copy_len++;
 		wrt_size = compress_copy_data(file, copy_len, sav->raw_data + offset - copy_len);
 		if (wrt_size == 0)
 			return 0;
