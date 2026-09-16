@@ -2,34 +2,36 @@
 #include <malloc.h>
 #include "dqmjsav.h"
 #include "dqmjsav.inl"
+#include "compress.h"
 
 /************************************************************************/
 
-#define DESMUME_IDENTIFIER		"|-DESMUME SAVE-|"
+#define DESMUME_IDENTIFIER			"|-DESMUME SAVE-|"
 
-#define NOCASHBGA_IDENTIFIER	"NocashGbaBackupMediaSavDataFile\x1A"
-#define NOCASHBGA_UNCOMPRESSED	0								/* No$GBA圧縮方法用：未圧縮 */
-#define NOCASHBGA_COMPRESSED	1								/* No$GBA圧縮方法用：圧縮済み */
+#define NOCASHBGA_IDENTIFIER		"NocashGbaBackupMediaSavDataFile\x1A"
+#define NOCASHBGA_UNCOMPRESSED		0								/* No$GBA圧縮方法用：未圧縮 */
+#define NOCASHBGA_COMPRESSED_RLU	1								/* No$GBA圧縮方法用：Fast/RLU */
+#define NOCASHBGA_COMPRESSED_LZ		2								/* No$GBA圧縮方法用：Good/LZ */
 
-#define SAVE_SIZE_MIN			0xA760							/* セーブデータの最小サイズ */
-#define INTERRUPT_OFFSET		0xA700							/* 中断データのオフセット */
-#define SAVE_IDENTIFIER			0x004D5144						/* 'DQM\x00' */
-#define STATUS_DEAD				0x80							/* 死亡フラグ */
-#define STATUS_POISON			0x01							/* 毒フラグ */
+#define SAVE_SIZE_MIN				0xA760							/* セーブデータの最小サイズ */
+#define INTERRUPT_OFFSET			0xA700							/* 中断データのオフセット */
+#define SAVE_IDENTIFIER				0x004D5144						/* 'DQM\x00' */
+#define STATUS_DEAD					0x80							/* 死亡フラグ */
+#define STATUS_POISON				0x01							/* 毒フラグ */
 
-#define MINMAX(v, a, b)			(max(min((v), (b)), (a)))
-#define BETWEEN(v, a, b)		(((v) >= (a)) && ((v) < (b)))
-#define IS_INTR(handle)			(((struct save_info *)(handle))->interrupt_flag)
-#define GET_FMT(handle)			((struct save_fmt *)(IS_INTR(handle) ? (((struct save_info *)(handle))->raw_data + INTERRUPT_OFFSET) : ((struct save_info *)(handle))->raw_data))
-#define GET_HEADER(handle)		(&GET_FMT(handle)->header)
-#define GET_BODY(handle)		(&GET_FMT(handle)->body)
-#define EMPTY_NAME(name)		do { ZeroMemory(&(name), sizeof(name)); *((LPBYTE)&(name)) = 0xFF; } while (FALSE)
-#define COPY_NAME(dest, src)	do { ZeroMemory(&(dest), sizeof(dest)); CopyMemory(&(dest), &(src), min(sizeof(dest), sizeof(src))); } while (FALSE)
-#define GET_BIT(buff, i)		(((buff)[(i) >> 3] >> ((i) & 7)) & 1)
-#define SET_BIT(buff, i)		((VOID)((buff)[(i) >> 3] |= 1 << ((i) & 7)))
-#define CLR_BIT(buff, i)		((VOID)((buff)[(i) >> 3] &= ~(1 << ((i) & 7))))
-#define GET_HALF(buff, i)		(((i) & 1) ? ((buff)[(i) >> 1] >> 4) : ((buff)[(i) >> 1] & 0x0F))
-#define SET_HALF(buff, i, v)	((VOID)((buff)[(i) >> 1] = ((i) & 1) ? (((buff)[(i) >> 1] & 0x0F) | ((v) << 4)) : (((buff)[(i) >> 1] & 0xF0) | ((v) & 0x0F))))
+#define MINMAX(v, a, b)				(max(min((v), (b)), (a)))
+#define BETWEEN(v, a, b)			(((v) >= (a)) && ((v) < (b)))
+#define IS_INTR(handle)				(((struct save_info *)(handle))->interrupt_flag)
+#define GET_FMT(handle)				((struct save_fmt *)(IS_INTR(handle) ? (((struct save_info *)(handle))->raw_data + INTERRUPT_OFFSET) : ((struct save_info *)(handle))->raw_data))
+#define GET_HEADER(handle)			(&GET_FMT(handle)->header)
+#define GET_BODY(handle)			(&GET_FMT(handle)->body)
+#define EMPTY_NAME(name)			do { ZeroMemory(&(name), sizeof(name)); *((LPBYTE)&(name)) = 0xFF; } while (FALSE)
+#define COPY_NAME(dest, src)		do { ZeroMemory(&(dest), sizeof(dest)); CopyMemory(&(dest), &(src), min(sizeof(dest), sizeof(src))); } while (FALSE)
+#define GET_BIT(buff, i)			(((buff)[(i) >> 3] >> ((i) & 7)) & 1)
+#define SET_BIT(buff, i)			((VOID)((buff)[(i) >> 3] |= 1 << ((i) & 7)))
+#define CLR_BIT(buff, i)			((VOID)((buff)[(i) >> 3] &= ~(1 << ((i) & 7))))
+#define GET_HALF(buff, i)			(((i) & 1) ? ((buff)[(i) >> 1] >> 4) : ((buff)[(i) >> 1] & 0x0F))
+#define SET_HALF(buff, i, v)		((VOID)((buff)[(i) >> 1] = ((i) & 1) ? (((buff)[(i) >> 1] & 0x0F) | ((v) << 4)) : (((buff)[(i) >> 1] & 0xF0) | ((v) & 0x0F))))
 
 /************************************************************************/
 
@@ -315,18 +317,6 @@ static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw);
 
 /* 未圧縮データを直接読み込み */
 static BOOL read_uncompressed_data(HANDLE file, UINT size, struct save_info *sav);
-
-/* 圧縮データを解凍しながら読み込む */
-static BOOL read_compressed_data(HANDLE file, UINT data_size, UINT raw_size, struct save_info *sav);
-
-/* セーブデータを圧縮して書き込む */
-static UINT write_compressed_data(HANDLE file, struct save_info *sav);
-
-/* 圧縮コピーデータ処理 */
-static UINT compress_copy_data(HANDLE file, UINT len, LPBYTE data);
-
-/* 圧縮重複データ処理 */
-static UINT compress_repeat_data(HANDLE file, UINT len, BYTE data);
 
 /************************************************************************/
 
@@ -2151,19 +2141,25 @@ static BOOL read_save_file(HANDLE file, struct save_info *sav)
 		switch (nocashgba->header.compression)
 		{
 		case NOCASHBGA_UNCOMPRESSED:
-			data_size = nocashgba->header.data_size;
-			if (!read_uncompressed_data(file, data_size, sav))
+			if (!read_uncompressed_data(file, nocashgba->header.data_size, sav))
 				return FALSE;
 			break;
-		case NOCASHBGA_COMPRESSED:
-			if (!ReadFile(file, &data_size, sizeof(data_size), &read_size, NULL) || (read_size != sizeof(data_size)))
+		case NOCASHBGA_COMPRESSED_RLU:
+			sav->raw_data = uncompress_rlu_data(file, nocashgba->header.data_size, &sav->raw_size);
+			if (sav->raw_data == NULL)
 				return FALSE;
-			if (!read_compressed_data(file, nocashgba->header.data_size - sizeof(data_size), data_size, sav))
+			break;
+		case NOCASHBGA_COMPRESSED_LZ:
+			sav->raw_data = uncompress_lz_data(file, nocashgba->header.data_size, &sav->raw_size);
+			if (sav->raw_data == NULL)
 				return FALSE;
 			break;
 		default:
 			return FALSE;
 		}
+
+		if (sav->raw_size < SAVE_SIZE_MIN)
+			return FALSE;
 
 		nocashgba->footer_size = file_size - sizeof(nocashgba->header) - nocashgba->header.data_size;
 		if (nocashgba->footer_size != 0)
@@ -2178,6 +2174,8 @@ static BOOL read_save_file(HANDLE file, struct save_info *sav)
 			if (!ReadFile(file, nocashgba->footer, nocashgba->footer_size, &read_size, NULL) || (read_size != nocashgba->footer_size))
 				return FALSE;
 		}
+
+		data_size = sav->raw_size;
 	}
 	else
 	{
@@ -2248,39 +2246,47 @@ static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw)
 	struct desmume_info *desmume = &sav->extend_data.desmume_info;
 	struct nocashgba_info *nocashgba = &sav->extend_data.nocashgba_info;
 
+	if (sav->raw_size < SAVE_SIZE_MIN)
+		return FALSE;
+
 	fmt = (struct save_fmt *)(sav->interrupt_flag ? (sav->raw_data + INTERRUPT_OFFSET) : sav->raw_data);
 	fmt->header.checksum = calc_save_checksum(fmt);
 
 	if (!as_raw && (sav->format == DQMJ_FORMAT_NOCASHBGA))
 	{
-		nocashgba->header.data_size = sav->raw_size;
+		if (!WriteFile(file, &nocashgba->header, sizeof(nocashgba->header), &wrt_size, NULL) || (wrt_size != sizeof(nocashgba->header)))
+			return FALSE;
+
+		switch (nocashgba->header.compression)
+		{
+		case NOCASHBGA_COMPRESSED_RLU:
+			nocashgba->header.data_size = compress_rlu_data(file, sav->raw_data, sav->raw_size);
+			if (nocashgba->header.data_size == 0)
+				return FALSE;
+			break;
+		case NOCASHBGA_COMPRESSED_LZ:
+			nocashgba->header.data_size = compress_lz_data(file, sav->raw_data, sav->raw_size);
+			if (nocashgba->header.data_size == 0)
+				return FALSE;
+			break;
+		default:
+			nocashgba->header.data_size = sav->raw_size;
+			if (!WriteFile(file, sav->raw_data, sav->raw_size, &wrt_size, NULL) || (wrt_size != sav->raw_size))
+				return FALSE;
+			break;
+		}
+
+		if (SetFilePointer(file, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+			return FALSE;
 
 		if (!WriteFile(file, &nocashgba->header, sizeof(nocashgba->header), &wrt_size, NULL) || (wrt_size != sizeof(nocashgba->header)))
 			return FALSE;
 
-		if (nocashgba->header.compression == NOCASHBGA_COMPRESSED)
-		{
-			nocashgba->header.data_size = write_compressed_data(file, sav);
-			if (nocashgba->header.data_size == 0)
-				return FALSE;
-
-			if (SetFilePointer(file, (LONG)&((struct nocashgba_header *)NULL)->data_size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
-				return FALSE;
-
-			if (!WriteFile(file, &nocashgba->header.data_size, sizeof(nocashgba->header.data_size), &wrt_size, NULL) || (wrt_size != sizeof(nocashgba->header.data_size)))
-				return FALSE;
-
-			if (SetFilePointer(file, sizeof(nocashgba->header) + nocashgba->header.data_size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
-				return FALSE;
-		}
-		else
-		{
-			if (!WriteFile(file, sav->raw_data, sav->raw_size, &wrt_size, NULL) || (wrt_size != sav->raw_size))
-				return FALSE;
-		}
-
 		if (nocashgba->footer_size != 0)
 		{
+			if (SetFilePointer(file, nocashgba->header.data_size, NULL, FILE_CURRENT) == INVALID_SET_FILE_POINTER)
+				return FALSE;
+
 			if (!WriteFile(file, nocashgba->footer, nocashgba->footer_size, &wrt_size, NULL) || (wrt_size != nocashgba->footer_size))
 				return FALSE;
 		}
@@ -2311,9 +2317,6 @@ static BOOL read_uncompressed_data(HANDLE file, UINT size, struct save_info *sav
 {
 	DWORD read_size;
 
-	if (size < SAVE_SIZE_MIN)
-		return FALSE;
-
 	sav->raw_size = size;
 	sav->raw_data = HeapAlloc(GetProcessHeap(), 0, size);
 	if (sav->raw_data == NULL)
@@ -2323,236 +2326,6 @@ static BOOL read_uncompressed_data(HANDLE file, UINT size, struct save_info *sav
 		return FALSE;
 
 	return TRUE;
-}
-
-/* 圧縮データを解凍しながら読み込む */
-static BOOL read_compressed_data(HANDLE file, UINT data_size, UINT raw_size, struct save_info *sav)
-{
-	UINT offset;
-	UINT16 word, len;
-	DWORD read_size;
-
-	if (raw_size < SAVE_SIZE_MIN)
-		return FALSE;
-
-	sav->raw_size = raw_size;
-	sav->raw_data = HeapAlloc(GetProcessHeap(), 0, raw_size);
-	if (sav->raw_data == NULL)
-		return FALSE;
-
-	offset = 0;
-
-	while (offset < raw_size)
-	{
-		if (data_size < sizeof(word))
-			return FALSE;
-
-		if (!ReadFile(file, &word, sizeof(word), &read_size, NULL) || (read_size != sizeof(word)))
-			return FALSE;
-
-		data_size -= sizeof(word);
-
-		if (LOBYTE(word) > 0x80)
-		{
-			len = LOBYTE(word) - 0x80;
-			if (offset + len > raw_size)
-				len = raw_size - offset;
-
-			FillMemory(sav->raw_data + offset, len, HIBYTE(word));
-			offset += len;
-			continue;
-		}
-
-		if (LOBYTE(word) < 0x80)
-		{
-			len = LOBYTE(word);
-			if (len == 0)
-				return FALSE;
-
-			if (offset + len > raw_size)
-				len = raw_size - offset;
-
-			sav->raw_data[offset++] = HIBYTE(word);
-			len--;
-			if (len == 0)
-				continue;
-
-			if (data_size < len)
-				return FALSE;
-
-			if (!ReadFile(file, sav->raw_data + offset, len, &read_size, NULL) || (read_size != len))
-				return FALSE;
-
-			data_size -= len;
-			offset += len;
-			continue;
-		}
-
-		if (data_size < sizeof(len))
-			return FALSE;
-
-		if (!ReadFile(file, &len, sizeof(len), &read_size, NULL) || (read_size != sizeof(len)))
-			return FALSE;
-
-		data_size -= sizeof(len);
-
-		if (offset + len > raw_size)
-			len = raw_size - offset;
-
-		FillMemory(sav->raw_data + offset, len, HIBYTE(word));
-		offset += len;
-	}
-
-	return TRUE;
-}
-
-/* セーブデータを圧縮して書き込む */
-static UINT write_compressed_data(HANDLE file, struct save_info *sav)
-{
-	UINT offset, data_size, copy_len, repeat_len;
-	UINT8 byte;
-	UINT32 raw_size;
-	DWORD wrt_size;
-
-	data_size = 0;
-	raw_size = sav->raw_size;
-
-	if (!WriteFile(file, &raw_size, sizeof(raw_size), &wrt_size, NULL) || (wrt_size != sizeof(raw_size)))
-		return 0;
-
-	data_size += sizeof(raw_size);
-	byte = sav->raw_data[0];
-	offset = 1;
-	copy_len = 1;
-	repeat_len = 1;
-
-	do
-	{
-		if (sav->raw_data[offset] == byte)
-		{
-			offset++;
-			copy_len++;
-			repeat_len++;
-
-			if (repeat_len > 2)
-			{
-				if (copy_len > repeat_len)
-				{
-					wrt_size = compress_copy_data(file, copy_len - repeat_len, sav->raw_data + offset - copy_len);
-					if (wrt_size == 0)
-						return 0;
-
-					data_size += wrt_size;
-				}
-
-				copy_len = 0;
-			}
-		}
-		else
-		{
-			if (repeat_len > 2)
-			{
-				wrt_size = compress_repeat_data(file, repeat_len, byte);
-				if (wrt_size == 0)
-					return 0;
-
-				data_size += wrt_size;
-			}
-
-			byte = sav->raw_data[offset++];
-			copy_len++;
-			repeat_len = 1;
-		}
-	}
-	while (offset < raw_size);
-
-	if (repeat_len > 2)
-	{
-		wrt_size = compress_repeat_data(file, repeat_len, byte);
-		if (wrt_size == 0)
-			return 0;
-	}
-	else
-	{
-		wrt_size = compress_copy_data(file, copy_len, sav->raw_data + offset - copy_len);
-		if (wrt_size == 0)
-			return 0;
-	}
-
-	data_size += wrt_size;
-	byte = 0;
-
-	if (!WriteFile(file, &byte, sizeof(byte), &wrt_size, NULL) || (wrt_size != sizeof(byte)))
-		return 0;
-
-	return data_size + sizeof(byte);
-}
-
-/* 圧縮コピーデータ処理 */
-static UINT compress_copy_data(HANDLE file, UINT len, LPBYTE data)
-{
-	UINT data_size;
-	UINT8 byte;
-	DWORD wrt_size;
-
-	data_size = 0;
-	
-	while (len != 0)
-	{
-		byte = (len < 0x80) ? len : 0x7F;
-		len -= byte;
-
-		if (!WriteFile(file, &byte, sizeof(byte), &wrt_size, NULL) || (wrt_size != sizeof(byte)))
-			return 0;
-		if (!WriteFile(file, data, byte, &wrt_size, NULL) || (wrt_size != byte))
-			return 0;
-
-		data_size += sizeof(byte) + byte;
-	}
-
-	return data_size;
-}
-
-/* 圧縮重複データ処理 */
-static UINT compress_repeat_data(HANDLE file, UINT len, BYTE data)
-{
-	UINT data_size;
-	UINT8 byte;
-	UINT16 word;
-	DWORD wrt_size;
-
-	data_size = 0;
-
-	while (len != 0)
-	{
-		if (len < 0x80)
-		{
-			byte = len | 0x80;
-
-			if (!WriteFile(file, &byte, sizeof(byte), &wrt_size, NULL) || (wrt_size != sizeof(byte)))
-				return 0;
-			if (!WriteFile(file, &data, sizeof(data), &wrt_size, NULL) || (wrt_size != sizeof(data)))
-				return 0;
-
-			data_size += sizeof(byte) + sizeof(data);
-			break;
-		}
-
-		byte = 0x80;
-		word = (len < 0x10000) ? len : 0xFFFF;
-		len -= word;
-
-		if (!WriteFile(file, &byte, sizeof(byte), &wrt_size, NULL) || (wrt_size != sizeof(byte)))
-			return 0;
-		if (!WriteFile(file, &data, sizeof(data), &wrt_size, NULL) || (wrt_size != sizeof(data)))
-			return 0;
-		if (!WriteFile(file, &word, sizeof(word), &wrt_size, NULL) || (wrt_size != sizeof(word)))
-			return 0;
-
-		data_size += sizeof(byte) + sizeof(data) + sizeof(word);
-	}
-
-	return data_size;
 }
 
 /************************************************************************/
