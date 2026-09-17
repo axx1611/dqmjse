@@ -2259,13 +2259,10 @@ static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw)
 
 		switch (nocashgba->header.compression)
 		{
+		case NOCASHBGA_COMPRESSED_LZ:
+			nocashgba->header.compression = NOCASHBGA_COMPRESSED_RLU;
 		case NOCASHBGA_COMPRESSED_RLU:
 			nocashgba->header.data_size = compress_rlu_data(file, sav->raw_data, sav->raw_size);
-			if (nocashgba->header.data_size == 0)
-				return FALSE;
-			break;
-		case NOCASHBGA_COMPRESSED_LZ:
-			nocashgba->header.data_size = compress_lz_data(file, sav->raw_data, sav->raw_size);
 			if (nocashgba->header.data_size == 0)
 				return FALSE;
 			break;
