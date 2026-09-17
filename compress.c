@@ -1,4 +1,5 @@
-﻿#include "compress.h"
+﻿
+#include "compress.h"
 
 /************************************************************************/
 
@@ -85,6 +86,7 @@ UINT compress_lz_data(HANDLE file, LPCBYTE raw_data, UINT raw_size)
 static BOOL rlu_read(HANDLE file, UINT data_size, UINT raw_size, LPBYTE raw_data)
 {
 	UINT offset;
+	UINT8 byte;
 	UINT16 word, len;
 	DWORD read_size;
 
@@ -103,8 +105,8 @@ static BOOL rlu_read(HANDLE file, UINT data_size, UINT raw_size, LPBYTE raw_data
 		if (LOBYTE(word) > 0x80)
 		{
 			len = LOBYTE(word) - 0x80;
-			if (offset + len > raw_size)
-				len = raw_size - offset;
+			if (len > raw_size - offset)
+				return FALSE;
 
 			FillMemory(raw_data + offset, len, HIBYTE(word));
 			offset += len;
@@ -117,8 +119,8 @@ static BOOL rlu_read(HANDLE file, UINT data_size, UINT raw_size, LPBYTE raw_data
 			if (len == 0)
 				return FALSE;
 
-			if (offset + len > raw_size)
-				len = raw_size - offset;
+			if (len > raw_size - offset)
+				return FALSE;
 
 			raw_data[offset++] = HIBYTE(word);
 			len--;
@@ -144,12 +146,21 @@ static BOOL rlu_read(HANDLE file, UINT data_size, UINT raw_size, LPBYTE raw_data
 
 		data_size -= sizeof(len);
 
-		if (offset + len > raw_size)
-			len = raw_size - offset;
+		if (len > raw_size - offset)
+			return FALSE;
 
 		FillMemory(raw_data + offset, len, HIBYTE(word));
 		offset += len;
 	}
+
+	if (data_size != sizeof(byte))
+		return FALSE;
+
+	if (!ReadFile(file, &byte, sizeof(byte), &read_size, NULL) || (read_size != sizeof(byte)))
+		return FALSE;
+
+	if (byte != 0)
+		return FALSE;
 
 	return TRUE;
 }
@@ -248,6 +259,7 @@ static UINT rlu_copy(HANDLE file, UINT len, LPCBYTE data)
 		if (!WriteFile(file, data, byte, &wrt_size, NULL) || (wrt_size != byte))
 			return 0;
 
+		data += byte;
 		data_size += sizeof(byte) + byte;
 	}
 
