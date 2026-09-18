@@ -970,7 +970,7 @@ BOOL DQMJSaveQueryBriefing(HDQMJSAVE handle, DQMJ_SAVE_BRIEFING *out)
 	out->interrupt = IS_INTR(handle);
 	out->place_id = header->place_id;
 	out->party_member_num = header->party_member_num;
-	out->story_progress = max(header->story_progress / 5, 10);
+	out->story_progress = min(header->story_progress / 5, 10);
 	COPY_NAME(out->player_name, header->player_name);
 	timestamp_to_hms(header->play_time, &out->play_time_hour, &out->play_time_min, &out->play_time_sec);
 
