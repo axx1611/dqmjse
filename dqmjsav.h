@@ -95,7 +95,7 @@ enum
 enum
 {
 	DQMJ_ITEM_NORMAL,														/* 一般道具 */
-	DQMJ_ITEM_USABLE,														/* 使い物 */
+	DQMJ_ITEM_USABLE,														/* 使用可能 */
 	DQMJ_ITEM_SPECIAL,														/* 特殊道具 */
 	DQMJ_ITEM_SWORD,														/* 剣 */
 	DQMJ_ITEM_SPEAR,														/* やり */
@@ -107,7 +107,7 @@ enum
 	DQMJ_ITEM_NUM,
 };
 
-/* 主人公とくぎ用とくぎ番号 */
+/* 主人公特技番号 */
 enum
 {
 	DQMJ_PLAYERSKILL_ZOOM,													/* ルーラ */
@@ -185,7 +185,7 @@ enum
 	DQMJ_PARENT_NUM,
 };
 
-/* セーブデータファイルフォーマット */
+/* セーブデータファイル形式 */
 enum
 {
 	DQMJ_FORMAT_INVALID,													/* 無効 */
@@ -233,8 +233,8 @@ typedef struct
 	int					skillset;											/* スキルID */
 	LPCTSTR				name;												/* スキル名 */
 	BOOL				param;												/* パラメータスキルフラグ */
-	int					count;												/* とくぎ／パラメターの数 */
-	int					max_point;											/* 全ての特技開放所要スキルポイント */
+	int					count;												/* とくぎ／パラメータの数 */
+	int					max_point;											/* すべての特技開放に必要なスキルポイント */
 } DQMJ_SAVE_SKILLSET_SETTING;
 
 /* セーブ情報一括（ロード画面表示用） */
@@ -246,10 +246,10 @@ typedef struct
 	int					play_time_hour;										/* プレイ時間（時） */
 	int					play_time_min;										/* プレイ時間（分） */
 	int					play_time_sec;										/* プレイ時間（秒） */
-	int					party_member_num;									/* パーティーモンスター数 */
-	DQMJ_NAME			party_member_name[DQMJ_MEMBER_MAX];					/* パーティーモンスターの名前 */
-	int					party_member_race[DQMJ_MEMBER_MAX];					/* パーティーモンスターの種別 */
-	int					party_member_level[DQMJ_MEMBER_MAX];				/* パーティーモンスターのレベル */
+	int					party_member_num;									/* パーティモンスター数 */
+	DQMJ_NAME			party_member_name[DQMJ_MEMBER_MAX];					/* パーティモンスターの名前 */
+	int					party_member_race[DQMJ_MEMBER_MAX];					/* パーティモンスターの種別 */
+	int					party_member_level[DQMJ_MEMBER_MAX];				/* パーティモンスターのレベル */
 	int					story_progress;										/* マデュライト入手数 */
 } DQMJ_SAVE_BRIEFING;
 
@@ -290,8 +290,8 @@ typedef struct
 typedef struct
 {
 	int					monster_num;										/* 所持モンスター数 */
-	int					party_member_num;									/* パーティーモンスター数 */
-	int					party_member_idx[DQMJ_MEMBER_MAX];					/* スタンバイモンスターの番号 */
+	int					party_member_num;									/* パーティモンスター数 */
+	int					party_member_idx[DQMJ_MEMBER_MAX];					/* パーティモンスターの番号 */
 	int					standby_num;										/* スタンバイモンスター数 */
 	int					standby_idx[DQMJ_MEMBER_MAX];						/* スタンバイモンスターの番号 */
 } DQMJ_SAVE_RANCH_INFO;
@@ -374,13 +374,13 @@ EXTERN_C LPCTSTR DQMJSaveGetSkillName(int skill);
 /* 特性IDから特性名を取得 */
 EXTERN_C LPCTSTR DQMJSaveGetAbilityName(int ability);
 
-/* 指定するアイテムは装備可能かを判断する */
+/* 指定したアイテムが装備可能かどうかを判断する */
 EXTERN_C BOOL DQMJSaveCheckEquippable(int race, int equipment, CONST int *ability_list);
 
 /* モンスタースキルに振り分けたスキルポイントから該当スキルの開放特技数を取得 */
 EXTERN_C int DQMJSaveCalcSkillActiveCount(int skillset, int skill_point);
 
-/* モンスター情報を全て合法値範囲内にノーマライズする */
+/* モンスター情報をすべて合法範囲内に正規化する */
 EXTERN_C BOOL DQMJSaveNormalizeMonster(BOOL interrupt, BOOL in_party_or_standby, CONST DQMJ_NAME *player_name, DQMJ_SAVE_MONSTER_INFO *inout);
 
 /* セーブファイルを開く */
@@ -389,13 +389,13 @@ EXTERN_C HDQMJSAVE DQMJSaveOpenFile(LPCTSTR file_path);
 /* セーブファイルを閉じる */
 EXTERN_C BOOL DQMJSaveCloseFile(HDQMJSAVE handle);
 
-/* 名前を付けてセーブファイルを保存 */
+/* 名前を付けてセーブファイルを保存する */
 EXTERN_C BOOL DQMJSaveSaveToFile(HDQMJSAVE handle, LPCTSTR file_path, BOOL as_raw);
 
-/* セーブデータファイルフォーマットを取得 */
+/* セーブファイルの形式を取得する */
 EXTERN_C int DQMJSaveQueryFileFormat(HDQMJSAVE handle);
 
-/* セーブファイルから一括（ロード画面表示用）情報を取得 */
+/* セーブファイルからロード画面表示用の一括情報を取得する */
 EXTERN_C BOOL DQMJSaveQueryBriefing(HDQMJSAVE handle, DQMJ_SAVE_BRIEFING *out);
 
 /* セーブファイルからプレイ情報を取得 */
@@ -410,7 +410,7 @@ EXTERN_C BOOL DQMJSaveQueryLibraryInfo(HDQMJSAVE handle, DQMJ_SAVE_LIBRARY_INFO 
 /* セーブファイルから牧場情報を取得 */
 EXTERN_C BOOL DQMJSaveQueryRanchInfo(HDQMJSAVE handle, DQMJ_SAVE_RANCH_INFO *out);
 
-/* セーブファイルから特定モンスター情報を取得 */
+/* セーブファイルから指定したモンスター情報を取得する */
 EXTERN_C BOOL DQMJSaveQueryMonsterInfo(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MONSTER_INFO *out);
 
 /* セーブファイルのプレイ情報を変更 */
@@ -425,19 +425,19 @@ EXTERN_C BOOL DQMJSaveModifyLibraryInfo(HDQMJSAVE handle, CONST DQMJ_SAVE_LIBRAR
 /* セーブファイルの牧場情報を変更 */
 EXTERN_C BOOL DQMJSaveModifyRanchInfo(HDQMJSAVE handle, CONST DQMJ_SAVE_RANCH_INFO *in);
 
-/* セーブファイルの特定モンスター情報を変更 */
+/* セーブファイルの指定したモンスター情報を変更する */
 EXTERN_C BOOL DQMJSaveModifyMonster(HDQMJSAVE handle, int monster_idx, CONST DQMJ_SAVE_MONSTER_INFO *in, BOOL normalize);
 
 /* セーブファイルに新しいモンスターを作成して先頭に追加 */
 EXTERN_C BOOL DQMJSaveNewMonster(HDQMJSAVE handle, CONST DQMJ_SAVE_MONSTER_INFO *in, BOOL normalize);
 
-/* セーブファイルの特定モンスターの位置を移動 */
+/* セーブファイル内の指定したモンスターの位置を移動する */
 EXTERN_C BOOL DQMJSaveMoveMonster(HDQMJSAVE handle, int monster_idx, int moveto_idx);
 
-/* セーブファイルの特定モンスターをコピーして先頭に追加 */
+/* セーブファイル内の指定したモンスターをコピーして先頭に追加する */
 EXTERN_C BOOL DQMJSaveCopyMonster(HDQMJSAVE handle, int monster_idx);
 
-/* セーブファイルの特定モンスターを削除 */
+/* セーブファイル内の指定したモンスターを削除する */
 EXTERN_C BOOL DQMJSaveRemoveMonster(HDQMJSAVE handle, int monster_idx);
 
 /************************************************************************/

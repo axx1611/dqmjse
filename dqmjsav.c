@@ -9,9 +9,9 @@
 #define DESMUME_IDENTIFIER			"|-DESMUME SAVE-|"
 
 #define NOCASHBGA_IDENTIFIER		"NocashGbaBackupMediaSavDataFile\x1A"
-#define NOCASHBGA_UNCOMPRESSED		0								/* No$GBA圧縮方法用：未圧縮 */
-#define NOCASHBGA_COMPRESSED_RLU	1								/* No$GBA圧縮方法用：Fast/RLU */
-#define NOCASHBGA_COMPRESSED_LZ		2								/* No$GBA圧縮方法用：Good/LZ */
+#define NOCASHBGA_UNCOMPRESSED		0								/* No$GBAの圧縮方式：未圧縮 */
+#define NOCASHBGA_COMPRESSED_RLU	1								/* No$GBAの圧縮方式：Fast/RLU */
+#define NOCASHBGA_COMPRESSED_LZ		2								/* No$GBAの圧縮方式：Good/LZ */
 
 #define SAVE_SIZE_MIN				0xA760							/* セーブデータの最小サイズ */
 #define INTERRUPT_OFFSET			0xA700							/* 中断データのオフセット */
@@ -51,7 +51,7 @@ struct monster_fmt
 	UINT8						rom_data2[24];					/* 0019: 不明、ROMデータその２ */
 	UINT8						unused2;						/* 0031: 未使用、通常は0 */
 	UINT8						base_guard[31];					/* 0032: 既定ガード */
-	UINT8						actual_guard[31];				/* 0051: 実際ガード */
+	UINT8						actual_guard[31];				/* 0051: 実際のガード */
 	UINT8						source;							/* 0070: 入手ルート */
 	UINT8						status;							/* 0071: 異常状態マスク */
 	UINT8						level;							/* 0072: レベル */
@@ -95,17 +95,17 @@ struct monster_fmt
 	UINT8						mother_name[11];				/* 011E: 母親の名前 */
 	UINT8						mother_master[11];				/* 0129: 母親のマスターの名前 */
 	UINT16						father_father_race;				/* 0134: 祖父の種別 */
-	UINT8						father_father_name[11];			/* 0136: 祖父の名前の為に保留、未使用 */
-	UINT8						father_father_master[11];		/* 0141: 祖父のマスターの名前の為に保留、未使用 */
+	UINT8						father_father_name[11];			/* 0136: 祖父の名前用に確保、未使用 */
+	UINT8						father_father_master[11];		/* 0141: 祖父のマスター名用に確保、未使用 */
 	UINT16						father_mother_race;				/* 014C: 祖母の種別 */
-	UINT8						father_mother_name[11];			/* 014E: 祖母の名前の為に保留、未使用 */
-	UINT8						father_mother_master[11];		/* 0159: 祖母のマスターの名前の為に保留、未使用 */
+	UINT8						father_mother_name[11];			/* 014E: 祖母の名前用に確保、未使用 */
+	UINT8						father_mother_master[11];		/* 0159: 祖母のマスター名用に確保、未使用 */
 	UINT16						mother_father_race;				/* 0164: 外祖父の種別 */
-	UINT8						mother_father_name[11];			/* 0166: 外祖父の名前の為に保留、未使用 */
-	UINT8						mother_father_master[11];		/* 0171: 外祖父のマスターの名前の為に保留、未使用 */
+	UINT8						mother_father_name[11];			/* 0166: 外祖父の名前用に確保、未使用 */
+	UINT8						mother_father_master[11];		/* 0171: 外祖父のマスター名用に確保、未使用 */
 	UINT16						mother_mother_race;				/* 017C: 外祖母の種別 */
-	UINT8						mother_mother_name[11];			/* 017E: 外祖母の名前の為に保留、未使用 */
-	UINT8						mother_mother_master[11];		/* 0189: 外祖母のマスターの名前の為に保留、未使用 */
+	UINT8						mother_mother_name[11];			/* 017E: 外祖母の名前用に確保、未使用 */
+	UINT8						mother_mother_master[11];		/* 0189: 外祖母のマスター名用に確保、未使用 */
 };
 
 /* セーブデータフォーマットヘッダ */
@@ -156,7 +156,7 @@ struct save_fmt_body
 	UINT8						unknown8[500];
 	UINT32						bookstore_inited;				/* 0608: スキルブックストア初期化完了フラグ */
 	UINT16						standby_num;					/* 060C: スタンバイモンスター数 */
-	UINT8						standby_idx[3];					/* 060E: パーティモンスターの番号 */
+	UINT8						standby_idx[3];					/* 060E: スタンバイモンスターの番号 */
 	UINT8						unknown9[75];
 	struct monster_fmt			monster_list[100];				/* 065C: 所持モンスター情報 */
 	struct monster_fmt			saint_beast;					/* A42C: 神獣取得時のモンスター情報 */
@@ -226,7 +226,7 @@ struct save_info
 	int							format;							/* セーブファイルのフォーマット */
 	LPBYTE						raw_data;						/* 生のセーブデータ */
 	UINT						raw_size;						/* 生データのサイズ */
-	BOOL						interrupt_flag;					/* 中断データの有り無し */
+	BOOL						interrupt_flag;					/* 中断データの有無 */
 	union extend_info			extend_data;					/* フォーマット拡張情報 */
 };
 
@@ -285,37 +285,37 @@ static VOID unlock_ability(LPINT ability_list, int ability);
 /* 指定の特技を開放する */
 static VOID unlock_skill(LPINT skill_list, int skill);
 
-/* 特技リストの順番ソート */
+/* 特技リストを指定した順序に並べ替える */
 static VOID sort_skill_list(LPINT skill_list, LPINT order);
 
-/* 指定するアイテムは装備可能かを判断する */
+/* 指定したアイテムが装備可能かどうかを判断する */
 static CONST struct item_info *check_equippable(int equipment, CONST struct race_info *ri, CONST int *ability_list);
 
-/* 処理用セーブ情報内部で使われてるメモリーを解放 */
+/* 処理用セーブ情報内部で使用しているメモリを解放する */
 static VOID free_save_info(struct save_info *sav);
 
-/* 特定モンスターはパーティーメンバーか、もしくはスタンバイかを判定 */
+/* 指定したモンスターがパーティメンバーまたはスタンバイかを判定する */
 static BOOL check_monster_in_party_or_standby(int monster_idx, CONST struct save_fmt_body *body);
 
-/* 全てのパーティーメンバーが削除された場合デフォルトのパーティメンバーを作成 */
+/* すべてのパーティメンバーが削除された場合、デフォルトのパーティメンバーを作成する */
 static void set_default_party_member(struct save_fmt_header *header, struct save_fmt_body *body);
 
-/* 特定モンスター情報を強制変更 */
+/* 指定したモンスター情報を強制的に変更する */
 static VOID modify_monster_info_force(struct monster_fmt *monster, CONST DQMJ_SAVE_MONSTER_INFO *in);
 
-/* モンスター情報を全て合法値範囲内にノーマライズする */
+/* モンスター情報をすべて有効な値の範囲内に正規化する */
 static BOOL normalize_monster_by_handle(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MONSTER_INFO *inout);
 
-/* 特定モンスター情報を全てクリア */
+/* 指定したモンスター情報をすべてクリアする */
 static VOID clear_monster_info(struct monster_fmt *monster);
 
-/* 開いたセーブファイルの読み込み処理 */
+/* 開いたセーブファイルを読み込む */
 static BOOL read_save_file(HANDLE file, struct save_info *sav);
 
-/* 新規セーブファイルの書き込み処理 */
+/* 新しいセーブファイルを書き込む */
 static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw);
 
-/* 未圧縮データを直接読み込み */
+/* 未圧縮データを直接読み込む */
 static BOOL read_uncompressed_data(HANDLE file, UINT size, struct save_info *sav);
 
 /************************************************************************/
@@ -628,7 +628,7 @@ LPCTSTR DQMJSaveGetAbilityName(int ability)
 	return ai->name;
 }
 
-/* 指定するアイテムは装備可能かを判断する */
+/* 指定したアイテムが装備可能かどうかを判断する */
 BOOL DQMJSaveCheckEquippable(int race, int equipment, CONST int *ability_list)
 {
 	CONST struct race_info *ri;
@@ -670,7 +670,7 @@ int DQMJSaveCalcSkillActiveCount(int skillset, int skill_point)
 	return n;
 }
 
-/* モンスター情報を全て合法値範囲内にノーマライズする */
+/* モンスター情報をすべて合法範囲内に正規化する */
 BOOL DQMJSaveNormalizeMonster(BOOL interrupt, BOOL in_party_or_standby, CONST DQMJ_NAME *player_name, DQMJ_SAVE_MONSTER_INFO *inout)
 {
 	int i, j, max_sp;
@@ -926,7 +926,7 @@ BOOL DQMJSaveCloseFile(HDQMJSAVE handle)
 	return TRUE;
 }
 
-/* 名前を付けてセーブファイルを保存 */
+/* 名前を付けてセーブファイルを保存する */
 BOOL DQMJSaveSaveToFile(HDQMJSAVE handle, LPCTSTR file_path, BOOL as_raw)
 {
 	BOOL ok;
@@ -948,7 +948,7 @@ BOOL DQMJSaveSaveToFile(HDQMJSAVE handle, LPCTSTR file_path, BOOL as_raw)
 	return ok;
 }
 
-/* セーブデータファイルフォーマットを取得 */
+/* セーブファイルの形式を取得する */
 int DQMJSaveQueryFileFormat(HDQMJSAVE handle)
 {
 	if ((handle == NULL) || (handle == INVALID_HANDLE_VALUE))
@@ -957,7 +957,7 @@ int DQMJSaveQueryFileFormat(HDQMJSAVE handle)
 	return ((struct save_info *)handle)->format;
 }
 
-/* セーブファイルから一括（ロード画面表示用）情報を取得 */
+/* セーブファイルからロード画面表示用の一括情報を取得する */
 BOOL DQMJSaveQueryBriefing(HDQMJSAVE handle, DQMJ_SAVE_BRIEFING *out)
 {
 	int i;
@@ -1082,7 +1082,7 @@ BOOL DQMJSaveQueryRanchInfo(HDQMJSAVE handle, DQMJ_SAVE_RANCH_INFO *out)
 	return TRUE;
 }
 
-/* セーブファイルから特定モンスター情報を取得 */
+/* セーブファイルから指定したモンスター情報を取得する */
 BOOL DQMJSaveQueryMonsterInfo(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MONSTER_INFO *out)
 {
 	int i;
@@ -1344,7 +1344,7 @@ BOOL DQMJSaveModifyRanchInfo(HDQMJSAVE handle, CONST DQMJ_SAVE_RANCH_INFO *in)
 	return TRUE;
 }
 
-/* セーブファイルの特定モンスター情報を変更 */
+/* セーブファイルの指定したモンスター情報を変更する */
 BOOL DQMJSaveModifyMonster(HDQMJSAVE handle, int monster_idx, CONST DQMJ_SAVE_MONSTER_INFO *in, BOOL normalize)
 {
 	int i;
@@ -1448,7 +1448,7 @@ BOOL DQMJSaveNewMonster(HDQMJSAVE handle, CONST DQMJ_SAVE_MONSTER_INFO *in, BOOL
 	return TRUE;
 }
 
-/* セーブファイルの特定モンスターの位置を移動 */
+/* セーブファイル内の指定したモンスターの位置を移動する */
 BOOL DQMJSaveMoveMonster(HDQMJSAVE handle, int monster_idx, int moveto_idx)
 {
 	int i, j;
@@ -1520,7 +1520,7 @@ BOOL DQMJSaveMoveMonster(HDQMJSAVE handle, int monster_idx, int moveto_idx)
 	return TRUE;
 }
 
-/* セーブファイルの特定モンスターをコピーして先頭に追加 */
+/* セーブファイル内の指定したモンスターをコピーして先頭に追加する */
 BOOL DQMJSaveCopyMonster(HDQMJSAVE handle, int monster_idx)
 {
 	int i;
@@ -1552,7 +1552,7 @@ BOOL DQMJSaveCopyMonster(HDQMJSAVE handle, int monster_idx)
 	return TRUE;
 }
 
-/* セーブファイルの特定モンスターを削除 */
+/* セーブファイル内の指定したモンスターを削除する */
 BOOL DQMJSaveRemoveMonster(HDQMJSAVE handle, int monster_idx)
 {
 	int i, j, n;
@@ -1840,7 +1840,7 @@ static VOID unlock_skill(LPINT skill_list, int skill)
 	}
 }
 
-/* 特技リストの順番ソート */
+/* 特技リストを指定した順序に並べ替える */
 static VOID sort_skill_list(LPINT skill_list, LPINT order)
 {
 	int i, j, k;
@@ -1872,7 +1872,7 @@ static VOID sort_skill_list(LPINT skill_list, LPINT order)
 	}
 }
 
-/* 指定するアイテムは装備可能かを判断する */
+/* 指定したアイテムが装備可能かどうかを判断する */
 static CONST struct item_info *check_equippable(int equipment, CONST struct race_info *ri, CONST int *ability_list)
 {
 	int i = 0;
@@ -1894,7 +1894,7 @@ static CONST struct item_info *check_equippable(int equipment, CONST struct race
 	return NULL;
 }
 
-/* 処理用セーブ情報内部で使われてるメモリーを解放 */
+/* 処理用セーブ情報内部で使用しているメモリを解放する */
 static VOID free_save_info(struct save_info *sav)
 {
 	switch (sav->format)
@@ -1910,7 +1910,7 @@ static VOID free_save_info(struct save_info *sav)
 	HeapFree(GetProcessHeap(), 0, sav->raw_data);
 }
 
-/* 特定モンスターはパーティーメンバーか、もしくはスタンバイかを判定 */
+/* 指定したモンスターがパーティメンバーまたはスタンバイかを判定する */
 static BOOL check_monster_in_party_or_standby(int monster_idx, CONST struct save_fmt_body *body)
 {
 	int i;
@@ -1930,7 +1930,7 @@ static BOOL check_monster_in_party_or_standby(int monster_idx, CONST struct save
 	return FALSE;
 }
 
-/* 全てのパーティーメンバーが削除された場合デフォルトのパーティメンバーを作成 */
+/* すべてのパーティメンバーが削除された場合、デフォルトのパーティメンバーを作成する */
 static void set_default_party_member(struct save_fmt_header *header, struct save_fmt_body *body)
 {
 	int idx, i, j;
@@ -1958,7 +1958,7 @@ static void set_default_party_member(struct save_fmt_header *header, struct save
 	}
 }
 
-/* 特定モンスター情報を強制変更 */
+/* 指定したモンスター情報を強制的に変更する */
 static VOID modify_monster_info_force(struct monster_fmt *monster, CONST DQMJ_SAVE_MONSTER_INFO *in)
 {
 	int i;
@@ -2071,7 +2071,7 @@ static VOID modify_monster_info_force(struct monster_fmt *monster, CONST DQMJ_SA
 	monster->checksum = calc_monster_checksum(monster);
 }
 
-/* 特定モンスター情報を全てクリア */
+/* 指定したモンスター情報をすべてクリアする */
 static VOID clear_monster_info(struct monster_fmt *monster)
 {
 	ZeroMemory(monster, sizeof(struct monster_fmt));
@@ -2093,7 +2093,7 @@ static VOID clear_monster_info(struct monster_fmt *monster)
 	FillMemory(monster->mother_mother_master, sizeof(monster->mother_mother_master), 0xFF);
 }
 
-/* モンスター情報を全て合法値範囲内にノーマライズする */
+/* モンスター情報をすべて有効な値の範囲内に正規化する */
 BOOL normalize_monster_by_handle(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MONSTER_INFO *inout)
 {
 	BOOL in_party_or_standby;
@@ -2119,7 +2119,7 @@ BOOL normalize_monster_by_handle(HDQMJSAVE handle, int monster_idx, DQMJ_SAVE_MO
 	return DQMJSaveNormalizeMonster(IS_INTR(handle), in_party_or_standby, (CONST DQMJ_NAME *)&body->player_name, inout);
 }
 
-/* 開いたセーブファイルの読み込み処理 */
+/* 開いたセーブファイルを読み込む */
 static BOOL read_save_file(HANDLE file, struct save_info *sav)
 {
 	DWORD file_size, data_size, read_size;
@@ -2238,7 +2238,7 @@ static BOOL read_save_file(HANDLE file, struct save_info *sav)
 	return TRUE;
 }
 
-/* 新規セーブファイルの書き込み処理 */
+/* 新しいセーブファイルを書き込む */
 static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw)
 {
 	DWORD wrt_size;
@@ -2309,7 +2309,7 @@ static BOOL write_save_file(HANDLE file, struct save_info *sav, BOOL as_raw)
 	return TRUE;
 }
 
-/* 未圧縮データを直接読み込み */
+/* 未圧縮データを直接読み込む */
 static BOOL read_uncompressed_data(HANDLE file, UINT size, struct save_info *sav)
 {
 	DWORD read_size;

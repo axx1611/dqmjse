@@ -12,7 +12,7 @@
 #define ITEM_CLAW				0x0020			/* ツメフラグ */
 #define ITEM_STAFF				0x0040			/* つえフラグ */
 #define ITEM_WEAPON				0x00FF			/* 武器マスク */
-#define ITEM_USABLE				0x0100			/* 使い物フラグ */
+#define ITEM_USABLE				0x0100			/* 使用可能フラグ */
 #define ITEM_SPECIAL			0x0200			/* 特殊道具フラグ */
 
 /* 開放特技タイプ */

@@ -51,7 +51,7 @@ BOOL CItemListDlg::OnInitDialog()
 
 	m_cmbFilter.SetRedraw(FALSE);
 	VERIFY(m_cmbFilter.AddString(_T("すべて")) == CInventoryPanelDlg::FILTER_ALL);
-	VERIFY(m_cmbFilter.AddString(_T("使い物")) == CInventoryPanelDlg::FILTER_USABLE);
+	VERIFY(m_cmbFilter.AddString(_T("使用可能")) == CInventoryPanelDlg::FILTER_USABLE);
 	VERIFY(m_cmbFilter.AddString(_T("一般道具")) == CInventoryPanelDlg::FILTER_NORMAL);
 	VERIFY(m_cmbFilter.AddString(_T("特殊道具")) == CInventoryPanelDlg::FILTER_SPECIAL);
 	VERIFY(m_cmbFilter.AddString(_T("武器")) == CInventoryPanelDlg::FILTER_WEAPON);
