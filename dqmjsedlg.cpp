@@ -159,7 +159,7 @@ void CDqmjSEDlg::OnOK()
 
 void CDqmjSEDlg::OnCancel()
 {
-	if ((theApp.GetSaveHandle() != NULL) && (MessageBox(_T("未保存の変更データは全て失いますが、それでも終了しますか？"), _T("注意"), MB_OKCANCEL | MB_ICONWARNING) != IDOK))
+	if ((theApp.GetSaveHandle() != NULL) && (MessageBox(_T("未保存の変更内容はすべて失われますが、それでも終了しますか？"), _T("注意"), MB_OKCANCEL | MB_ICONWARNING) != IDOK))
 		return;
 
 	CDialog::OnCancel();
@@ -226,13 +226,13 @@ void CDqmjSEDlg::OnFileClose()
 
 void CDqmjSEDlg::OnFileSave()
 {
-	if (MessageBox(_T("データ破損の恐れがありますので、予めバックアップすることをお勧めします。\n\n保存処理を進みますか？"), _T("注意"), MB_YESNO | MB_ICONWARNING) != IDYES)
+	if (MessageBox(_T("データ破損の恐れがありますので、あらかじめバックアップを取ることをお勧めします。\n\n保存処理を続行しますか？"), _T("注意"), MB_YESNO | MB_ICONWARNING) != IDYES)
 		return;
 
 	if (theApp.SaveFile())
-		MessageBox(_T("保存完了しました。"), _T("通知"), MB_OK | MB_ICONINFORMATION);
+		MessageBox(_T("保存が完了しました。"), _T("通知"), MB_OK | MB_ICONINFORMATION);
 	else
-		MessageBox(_T("保存失敗しました！"), _T("エラー"), MB_OK | MB_ICONERROR);
+		MessageBox(_T("保存に失敗しました。"), _T("エラー"), MB_OK | MB_ICONERROR);
 }
 
 void CDqmjSEDlg::OnFileSaveAs()
@@ -264,14 +264,14 @@ void CDqmjSEDlg::OnFileSaveAs()
 
 	if (dlg.GetPathName().CompareNoCase(theApp.GetFilePath()) == 0)
 	{
-		if (MessageBox(_T("データ破損の恐れがありますので、予めバックアップすることをお勧めします。\n\n保存処理を進みますか？"), _T("注意"), MB_YESNO | MB_ICONWARNING) != IDYES)
+		if (MessageBox(_T("データ破損の恐れがありますので、あらかじめバックアップを取ることをお勧めします。\n\n保存処理を続行しますか？"), _T("注意"), MB_YESNO | MB_ICONWARNING) != IDYES)
 			return;
 	}
 
 	if (theApp.SaveAsFile(dlg.GetPathName(), dlg.GetOFN().nFilterIndex != 1))
-		MessageBox(_T("保存完了しました。"), _T("通知"), MB_OK | MB_ICONINFORMATION);
+		MessageBox(_T("保存が完了しました。"), _T("通知"), MB_OK | MB_ICONINFORMATION);
 	else
-		MessageBox(_T("保存失敗しました！"), _T("エラー"), MB_OK | MB_ICONERROR);
+		MessageBox(_T("保存に失敗しました。"), _T("エラー"), MB_OK | MB_ICONERROR);
 }
 
 void CDqmjSEDlg::OnEditItemList()
